@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Patterns</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Patterns trouvés</h1>
+    {% if patterns %}
+      <table>
+        <thead><tr><th>Règle</th><th>Support</th><th>Confidence</th></tr></thead>
+        <tbody>
+        {% for p in patterns %}
+          <tr>
+            <td><a href="{{ url_for('pattern_detail', idx=loop.index0) }}">{{ p.rule }}</a></td>
+            <td>{{ p.support }}</td>
+            <td>{{ p.confidence }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Aucun pattern trouvé (augmente min_support/min_confidence)</p>
+    {% endif %}
+    <p><a href="/">Retour</a></p>
+  </div>
+</body>
+</html>

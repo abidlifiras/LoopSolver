@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pattern detail</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Détail du pattern</h1>
+    <p><strong>Pattern:</strong> {{ pattern.rule if pattern.rule is defined else pattern }}</p>
+    <p><strong>Support:</strong> {{ pattern.support if pattern.support is defined else '' }}</p>
+    <h2>Decision Tree (learned)</h2>
+    <pre>{{ rules }}</pre>
+    <p><a href="{{ url_for('patterns') }}">Retour</a></p>
+  </div>
+</body>
+</html>
