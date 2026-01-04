@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Predictions</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Prédictions (ordonnées par probabilité)</h1>
+    <table>
+      <thead><tr><th>#</th><th>age</th><th>urgency</th><th>complexity</th><th>delay</th><th>pred_priority</th><th>pred_prob</th></tr></thead>
+      <tbody>
+        {% for r in table %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ r.age }}</td><td>{{ r.urgency }}</td><td>{{ r.complexity }}</td><td>{{ r.delay }}</td>
+            <td>{{ r.pred_priority }}</td><td>{{ "%.2f"|format(r.pred_prob) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <form method="post" action="/add_predictions">
+      <button type="submit">Ajouter ces prédictions au dataset (feedback) et ré-entraîner</button>
+    </form>
+    <p><a href="/">Retour</a></p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Upload - FIDD-POC</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Charger une liste de radios</h1>
+    <form method="post" enctype="multipart/form-data">
+      <p>Coller un CSV (colonnes: age,urgency,complexity,delay) ou téléverser un fichier CSV</p>
+      <textarea name="csv_text" rows="10" style="width:100%;"></textarea><br>
+      <p>OU</p>
+      <input type="file" name="file" accept=".csv"><br><br>
+      <button type="submit">Prédire & Ordonnancer</button>
+    </form>
+    <p><a href="/">Retour</a></p>
+  </div>
+</body>
+</html>

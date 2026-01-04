@@ -14,7 +14,7 @@
         <tbody>
         {% for p in patterns %}
           <tr>
-            <td><a href="{{ url_for('pattern_detail', idx=loop.index0) }}">{{ p.rule }}</a></td>
+            <td>{{ p.rule }}</td>
             <td>{{ p.support }}</td>
             <td>{{ p.confidence }}</td>
           </tr>
@@ -24,6 +24,12 @@
     {% else %}
       <p>Aucun pattern trouvé (augmente min_support/min_confidence)</p>
     {% endif %}
+
+    <h2>Decision Tree (règles)</h2>
+    <pre style="background:#111;color:#0f0;padding:10px;border-radius:6px;">
+{{ tree_rules }}
+    </pre>
+
     <p><a href="/">Retour</a></p>
   </div>
 </body>

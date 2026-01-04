@@ -102,3 +102,7 @@ id,age,urgency,complexity,delay,priority
 100,45,medium,medium,14,1
 101,45,low,low,10,0
 102,23,low,medium,23,0
+103,34,low,low,5,0
+104,89,low,low,9,0
+105,23,low,low,2,0
+106,50,low,low,61,1

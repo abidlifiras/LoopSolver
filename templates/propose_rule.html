@@ -2,32 +2,30 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Proposer un exemple</title>
+  <title>Proposer une règle</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div class="container">
-    <h1>Proposer un exemple (feedback)</h1>
+    <h1>Proposer / Tester une règle</h1>
     <form method="post">
-      <label>Age: <input type="number" name="age" required></label><br>
-      <label>Urgency:
-        <select name="urgency">
-          <option value="low">low</option>
-          <option value="medium">medium</option>
-          <option value="high">high</option>
-        </select>
-      </label><br>
-      <label>Complexity:
-        <select name="complexity">
-          <option value="low">low</option>
-          <option value="medium">medium</option>
-          <option value="high">high</option>
-        </select>
-      </label><br>
-      <label>Delay (minutes): <input type="number" name="delay" required></label><br>
-      <label>Priority: <input type="number" name="priority" min="0" max="1" required></label><br>
-      <button type="submit">Soumettre</button>
+      <label>Règle (ex: "delay>60 -> priority=1")</label><br>
+      <input type="text" name="rule" style="width:100%" value="{{ last_rule if last_rule else '' }}" required><br><br>
+      <button type="submit" name="action" value="test">Tester la satisfaction</button>
+      <button type="submit" name="action" value="submit">Soumettre la règle (ajout synthétique + ré-entrainement)</button>
     </form>
+
+    {% if eval_res %}
+      <h2>Résultats du test</h2>
+      <p>Antecedent true for: {{ eval_res.count_antecedent }} rows</p>
+      <p>Antecedent & consequent true: {{ eval_res.count_antecedent_and_consequent }}</p>
+      <p>Violations: {{ eval_res.violations|length }}</p>
+      {% if eval_res.violations %}
+        <h3>Index des lignes en violation</h3>
+        <pre>{{ eval_res.violations }}</pre>
+      {% endif %}
+    {% endif %}
+
     <p><a href="/">Retour</a></p>
   </div>
 </body>
