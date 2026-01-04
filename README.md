@@ -156,11 +156,11 @@ Le système calcule :
 
 ## Concepts
 
-**Support**
+**Support :**
 Proportion de lignes où condition + conclusion sont vraies.
 
-**Confidence**
+**Confidence :**
 Parmi les cas où la condition est vraie, combien respectent aussi la conclusion.
 
-**Satisfaction**
+**Satisfaction :**
 Part globale du dataset respectant la règle.
