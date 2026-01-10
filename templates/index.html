@@ -9,7 +9,36 @@
   <div class="container">
     <h1>LOOP Solver - POC</h1>
     <p>Total exemples : {{ total }}</p>
-    <p>Priorités (1) : {{ urgent }}</p>
+    <h2>Priorités (1) : {{ urgent }}</h2>
+
+    {% if priority_rows %}
+      <table>
+        <thead><tr><th>age</th><th>urgency</th><th>complexity</th><th>delay</th><th>priority</th></tr></thead>
+        <tbody>
+        {% for r in priority_rows %}
+          <tr>
+            <td>{{ r.age }}</td>
+            <td>{{ r.urgency }}</td>
+            <td>{{ r.complexity }}</td>
+            <td>{{ r.delay }}</td>
+            <td>{{ r.priority }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="pagination" style="margin-top:8px;">
+        {% if page > 1 %}
+          <a href="{{ url_for('index', page=page-1) }}">« Précédent</a>
+        {% endif %}
+        <span style="margin:0 8px;">Page {{ page }} / {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="{{ url_for('index', page=page+1) }}">Suivant »</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p>Aucune ligne en priorité 1 trouvée.</p>
+    {% endif %}
     <ul>
       <li><a href="/patterns">Voir patterns extraits</a></li>
       <li><a href="/upload">Charger une liste de radios (prévoir colonnes: age, urgency, complexity, delay)</a></li>

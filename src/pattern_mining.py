@@ -29,7 +29,7 @@ def df_to_transactions(df, delay_thresholds=[30, 60], age_thresholds=[65, 75]):
         trans.append({it: (1 if it in row else 0) for it in all_items})
     return pd.DataFrame(trans)
 
-def mine_patterns(df, min_support=0.05, min_confidence=0.6):
+def mine_patterns(df, min_support=0.1, min_confidence=0.6):
     trans = df_to_transactions(df)
     freq = apriori(trans, min_support=min_support, use_colnames=True)
     if freq.empty:

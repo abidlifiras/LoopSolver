@@ -1,4 +1,3 @@
-# src/app.py
 from flask import Flask, render_template, request, redirect, url_for, flash
 import pandas as pd
 from .data_loader import load_raw, preprocess
@@ -17,19 +16,55 @@ DATA_PATH = "data/patients.csv"
 def index():
     df = load_raw()
     total = len(df)
-    urgent = int(df["priority"].sum())
-    return render_template("index.html", total=total, urgent=urgent)
+    # prepare priority=1 rows ordered by delay then age
+    try:
+        priority_df = df[df["priority"] == 1].sort_values(by=["delay", "age"], ascending=[False, False])
+    except Exception:
+        priority_df = df[df.get("priority", 0) == 1]
+    urgent = int(len(priority_df))
+
+    # pagination (8 per page)
+    try:
+        page = int(request.args.get("page", 1))
+        if page < 1:
+            page = 1
+    except Exception:
+        page = 1
+    page_size = 8
+    total_pages = max(1, (urgent + page_size - 1) // page_size)
+    if page > total_pages:
+        page = total_pages
+    start = (page - 1) * page_size
+    end = start + page_size
+    try:
+        priority_rows = priority_df.iloc[start:end].to_dict(orient="records")
+    except Exception:
+        priority_rows = []
+
+    return render_template("index.html", total=total, urgent=urgent,
+                           priority_rows=priority_rows, page=page, total_pages=total_pages)
 
 @app.route("/patterns")
 def patterns():
     df = load_raw()
-    pats, trans = mine_patterns(df)
+    # allow adjusting mining thresholds from the UI 
+    try:
+        min_support = float(request.args.get("min_support", 0.1))
+    except Exception:
+        min_support = 0.1
+    try:
+        min_confidence = float(request.args.get("min_confidence", 0.6))
+    except Exception:
+        min_confidence = 0.6
+
+    pats, trans = mine_patterns(df, min_support=min_support, min_confidence=min_confidence)
     try:
         model = load_model()
         rules_text = rules_from_tree(model)
     except Exception:
         rules_text = "Model not trained yet."
-    return render_template("patterns.html", patterns=pats, tree_rules=rules_text)
+    return render_template("patterns.html", patterns=pats, tree_rules=rules_text,
+                           min_support=min_support, min_confidence=min_confidence)
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():

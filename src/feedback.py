@@ -17,6 +17,6 @@ def add_feedback(df, example):
         "priority": example["priority"]
     }
     new_df = pd.concat([new_df, pd.DataFrame([example_row])], ignore_index=True)
-    # save back to disk if desired
+    # save updated data
     new_df.to_csv("data/patients.csv", index=False)
     return new_df

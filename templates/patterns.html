@@ -8,6 +8,16 @@
 <body>
   <div class="container">
     <h1>Patterns trouvés</h1>
+    <form method="get" action="{{ url_for('patterns') }}" style="margin-bottom:12px;">
+      <label>min_support:
+        <input type="number" name="min_support" min="0" max="1" step="0.01" value="{{ min_support if min_support is defined else 0.1 }}">
+      </label>
+      &nbsp;
+      <label>min_confidence:
+        <input type="number" name="min_confidence" min="0" max="1" step="0.01" value="{{ min_confidence if min_confidence is defined else 0.6 }}">
+      </label>
+      <button type="submit">Appliquer</button>
+    </form>
     {% if patterns %}
       <table>
         <thead><tr><th>Règle</th><th>Support</th><th>Confidence</th></tr></thead>
@@ -22,7 +32,7 @@
         </tbody>
       </table>
     {% else %}
-      <p>Aucun pattern trouvé (augmente min_support/min_confidence)</p>
+      <p>Aucun pattern trouvé (essayez d'abaisser `min_support` ou `min_confidence`).</p>
     {% endif %}
 
     <h2>Decision Tree (règles)</h2>
