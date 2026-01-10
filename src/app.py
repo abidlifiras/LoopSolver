@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import pandas as pd
-from .data_loader import load_raw, preprocess
+from .data_loader import load_raw, preprocess, load_radiologists, add_radiologist, assign_priority_patients, assign_radiologist, ensure_patient_columns
 from .pattern_mining import mine_patterns
 from .model import train, load_model, rules_from_tree
 from .feedback import add_feedback
@@ -14,35 +14,44 @@ DATA_PATH = "data/patients.csv"
 
 @app.route("/")
 def index():
+    # Run assignment first to ensure patients have radiologist_id set
+    try:
+        ensure_patient_columns()
+        res = assign_priority_patients()
+    except Exception:
+        # silently ignore assignment errors here (flash not suitable in index auto-run)
+        pass
+
     df = load_raw()
     total = len(df)
-    # prepare priority=1 rows ordered by delay then age
-    try:
-        priority_df = df[df["priority"] == 1].sort_values(by=["delay", "age"], ascending=[False, False])
-    except Exception:
-        priority_df = df[df.get("priority", 0) == 1]
-    urgent = int(len(priority_df))
 
-    # pagination (8 per page)
+    # build assignment display: patient id, age, priority, radiologist name
+    rads = load_radiologists()
+    rad_map = {int(r["id"]): r for r in rads.to_dict(orient="records")} if not rads.empty else {}
+    patients = df.to_dict(orient="records")
+    assignments_display = []
+    # show only patients that have been assigned
+    assigned_ids = set()
+    missing_specialties = []
     try:
-        page = int(request.args.get("page", 1))
-        if page < 1:
-            page = 1
+        assigned_ids = set([a[0] for a in (res.get("assigned") if isinstance(res, dict) else [])])
+        missing_specialties = sorted(list(set([s for (_, s) in (res.get("unassigned") if isinstance(res, dict) else [])])))
     except Exception:
-        page = 1
-    page_size = 8
-    total_pages = max(1, (urgent + page_size - 1) // page_size)
-    if page > total_pages:
-        page = total_pages
-    start = (page - 1) * page_size
-    end = start + page_size
-    try:
-        priority_rows = priority_df.iloc[start:end].to_dict(orient="records")
-    except Exception:
-        priority_rows = []
+        assigned_ids = set()
+        missing_specialties = []
 
-    return render_template("index.html", total=total, urgent=urgent,
-                           priority_rows=priority_rows, page=page, total_pages=total_pages)
+    for p in patients:
+        pid = int(p.get("id"))
+        if pid in assigned_ids:
+            rid = int(p.get("radiologist_id", -1)) if p.get("radiologist_id") is not None else -1
+            rinfo = rad_map.get(rid)
+            assignments_display.append({"id": pid, "age": p.get("age"), "priority": p.get("priority"), "radiologist": rinfo["name"] if rinfo else None})
+
+    # compute which specialties are missing from existing radiologists (for unassigned reqs)
+    existing_specs = set(r["specialty"] for r in rad_map.values()) if rad_map else set()
+    missing_specs_report = [s for s in missing_specialties if s not in existing_specs]
+
+    return render_template("index.html", total=total, assignments=assignments_display, missing_specialties=missing_specs_report)
 
 @app.route("/patterns")
 def patterns():
@@ -63,8 +72,33 @@ def patterns():
         rules_text = rules_from_tree(model)
     except Exception:
         rules_text = "Model not trained yet."
+    # prepare priority=1 rows ordered by delay then age (show on patterns page)
+    try:
+        priority_df = df[df["priority"] == 1].sort_values(by=["delay", "age"], ascending=[False, False])
+    except Exception:
+        priority_df = df[df.get("priority", 0) == 1]
+    # pagination for priority rows
+    try:
+        page = int(request.args.get("page", 1))
+        if page < 1:
+            page = 1
+    except Exception:
+        page = 1
+    page_size = 8
+    total_urgent = len(priority_df)
+    total_pages = max(1, (total_urgent + page_size - 1) // page_size)
+    if page > total_pages:
+        page = total_pages
+    start = (page - 1) * page_size
+    end = start + page_size
+    try:
+        priority_rows = priority_df.iloc[start:end].to_dict(orient="records")
+    except Exception:
+        priority_rows = []
+
     return render_template("patterns.html", patterns=pats, tree_rules=rules_text,
-                           min_support=min_support, min_confidence=min_confidence)
+                           min_support=min_support, min_confidence=min_confidence,
+                           priority_rows=priority_rows, page=page, total_pages=total_pages)
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
@@ -202,3 +236,62 @@ def propose():
 
 
 from .constraints import parse_rule
+
+
+@app.route("/radiologists", methods=["GET", "POST"])
+def radiologists():
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        specialty = request.form.get("specialty") or "general"
+        avail = request.form.get("available", "1")
+        try:
+            add_radiologist(name, email, specialty=specialty, available=int(avail))
+            flash("Radiologue ajouté.", "success")
+        except Exception as e:
+            flash(str(e), "danger")
+        return redirect(url_for("radiologists"))
+
+    rads = load_radiologists()
+    rows = rads.to_dict(orient="records") if not rads.empty else []
+    return render_template("radiologists.html", radiologists=rows)
+
+
+@app.route("/assignments", methods=["GET", "POST"])
+def assignments():
+    # ensure patient columns exist
+    ensure_patient_columns()
+    assigned = None
+    if request.method == "POST":
+        try:
+            assigned = assign_priority_patients()
+            flash("Affectations exécutées.", "success")
+        except Exception as e:
+            flash(str(e), "danger")
+    # normalize assigned result (dict with assigned/unassigned)
+    assigned_list = []
+    unassigned_list = []
+    if isinstance(assigned, dict):
+        assigned_list = assigned.get("assigned", [])
+        unassigned_list = assigned.get("unassigned", [])
+    elif isinstance(assigned, list):
+        assigned_list = assigned
+    # read patients and radiologists to display
+    df = load_raw()
+    rads = load_radiologists()
+    # merge display list: patient id, age, priority, radiologist name
+    patients = df.to_dict(orient="records")
+    rad_map = {int(r["id"]): r for r in rads.to_dict(orient="records")} if not rads.empty else {}
+    # show only assigned patients for clarity
+    assigned_ids = set([a[0] for a in assigned_list]) if assigned_list else set()
+    display = []
+    for p in patients:
+        pid = int(p.get("id"))
+        if pid in assigned_ids:
+            rid = int(p.get("radiologist_id", -1)) if p.get("radiologist_id") is not None else -1
+            rinfo = rad_map.get(rid)
+            display.append({"id": pid, "age": p.get("age"), "priority": p.get("priority"), "radiologist": rinfo["name"] if rinfo else None})
+    # collect missing specialties report
+    existing_specs = set(r["specialty"] for r in rad_map.values()) if rad_map else set()
+    missing_specs = sorted(list(set([s for (_, s) in unassigned_list if s not in existing_specs])))
+    return render_template("assignments.html", assignments=display, recent=assigned_list, missing_specialties=missing_specs)

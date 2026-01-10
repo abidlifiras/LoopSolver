@@ -1,0 +1,6 @@
+id,name,email,specialty,available
+0,Dr. Alice Dupont,alice.dupont@example.com,thoracic,1
+1,Dr. Benoit Martin,benoit.martin@example.com,neuroradiology,1
+2,Dr. Claire Petit,claire.petit@example.com,general,0
+3,Dr. Daniel Moreau,daniel.moreau@example.com,mammography,0
+4,Dr. Firas ABIDLI,abidliifiras@gmail.com,general,0

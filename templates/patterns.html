@@ -40,6 +40,42 @@
 {{ tree_rules }}
     </pre>
 
+    <h2>Priorités (1) :</h2>
+    {% if patterns is defined %}
+      {% set df = namespace(rows=[]) %}
+    {% endif %}
+    {% if request.args.get('show_urgents','1') %}
+      {# Recompute priority list server-side: the view passes priority_rows if available #}
+    {% endif %}
+    {# We'll rely on the existing endpoint's logic to provide priority_rows when present. #}
+    {% if priority_rows is defined and priority_rows %}
+      <table>
+        <thead><tr><th>age</th><th>urgency</th><th>complexity</th><th>delay</th><th>priority</th></tr></thead>
+        <tbody>
+        {% for r in priority_rows %}
+          <tr>
+            <td>{{ r.age }}</td>
+            <td>{{ r.urgency }}</td>
+            <td>{{ r.complexity }}</td>
+            <td>{{ r.delay }}</td>
+            <td>{{ r.priority }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="pagination" style="margin-top:8px;">
+        {% if page > 1 %}
+          <a href="{{ url_for('patterns', page=page-1, min_support=min_support, min_confidence=min_confidence) }}">« Précédent</a>
+        {% endif %}
+        <span style="margin:0 8px;">Page {{ page }} / {{ total_pages }}</span>
+        {% if page < total_pages %}
+          <a href="{{ url_for('patterns', page=page+1, min_support=min_support, min_confidence=min_confidence) }}">Suivant »</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <p>Aucun patient en priorité 1 trouvé (ou non fourni au template).</p>
+    {% endif %}
+
     <p><a href="/">Retour</a></p>
   </div>
 </body>

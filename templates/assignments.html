@@ -2,15 +2,17 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>LOOP Solver - POC</title>
+  <title>Affectations</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div class="container">
-    <h1>LOOP Solver - POC</h1>
-    <p>Total exemples : {{ total }}</p>
-    <h2>Affectations (patients → radiologues)</h2>
+    <h1>Affectations</h1>
+    <form method="post">
+      <button type="submit">Exécuter l'affectation automatique (priorité=1)</button>
+    </form>
 
+    <h2>Liste patients</h2>
     {% if assignments %}
       <table>
         <thead><tr><th>patient id</th><th>age</th><th>priority</th><th>radiologue</th></tr></thead>
@@ -26,18 +28,23 @@
         </tbody>
       </table>
     {% else %}
-      <p>Aucune affectation disponible.</p>
+      <p>Aucun patient trouvé.</p>
     {% endif %}
+
+    {% if recent and recent|length > 0 %}
+      <h3>Dernières opérations:</h3>
+      <ul>
+      {% for pid, rid in recent %}
+        <li>{{ pid }} -> {{ rid if rid else 'aucun' }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+
     {% if missing_specialties and missing_specialties|length > 0 %}
       <p style="color:darkred;">Spécialités manquantes (aucun radiologue disponible): {{ missing_specialties|join(', ') }}</p>
     {% endif %}
-    <ul>
-      <li><a href="/patterns">Voir patterns extraits (et tableau urgents)</a></li>
-      <li><a href="/radiologists">Gérer radiologues</a></li>
-      <li><a href="/assignments">Voir / exécuter affectations</a></li>
-      <li><a href="/upload">Charger une liste de patients (prévoir colonnes: age, urgency, complexity, delay)</a></li>
-      <li><a href="/propose">Proposer / tester une règle</a></li>
-    </ul>
+
+    <p><a href="/">Retour</a></p>
   </div>
 </body>
 </html>
